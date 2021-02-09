@@ -1,0 +1,38 @@
+
+  
+Parameters:
+  KeyName:
+    Description: Name of an existing EC2 key pair for SSH access to the EC2 instance.
+    Type: AWS::EC2::KeyPair::KeyName
+
+
+Resources:
+  WebServer:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      KeyName:  !Ref KeyName
+      SecurityGroupIds:
+        - !ImportValue  WebServerSG
+      SubnetId: !ImportValue  WebServerGroup1  
+      ImageId: ami-01aab85a5e4a5a0fe
+      UserData: 
+        Fn::Base64: |
+           #!/bin/bash
+           yum update -y
+           yum install -y httpd php mysql-server php-mysqlnd
+           service httpd start
+           chkconfig httpd on
+           groupadd www
+           usermod -a -G www ec2-user
+           chown -R root:www /var/www
+           chmod 2775 /var/www
+           find /var/www -type d -exec chmod 2775 {} +
+           find /var/www -type f -exec chmod 0664 {} +
+           echo "<?php phpinfo(); ?>" > /var/www/html/phpinfo.php
+
+Outputs:
+  WebServerUrl:
+    Description: WebServer  Url 
+    Value:  !Join [ "",[ "http://", !GetAtt WebServer.PublicDnsName]]
+
