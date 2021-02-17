@@ -1,0 +1,4 @@
+Resources:
+  Robudexclformation:
+    Type: AWS::S3::Bucket
+    
